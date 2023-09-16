@@ -1,0 +1,1844 @@
+#include<iostream>
+#include<fstream>
+#include <conio.h>
+ #include <windows.h>
+
+using namespace std;
+
+class Base;
+class User;
+class Page;
+class Post;
+class Comment;
+class Facebook;
+class Memory;
+//Helper Class 
+//which contains static functions of length,StringCopy and GetStringFromBuffer
+class Helper
+{
+public:
+	//Calculates String Length
+	static int StringLenght(char *str)
+{
+	int lenght=0;
+	
+	if(str!=0)
+	{
+	
+		for(int i=0; str[i]!='\0'; i++)
+			{
+			lenght++;
+			}
+				return lenght;
+	}
+				else
+					{
+						return 1;
+					}
+
+}
+	//Copy One string Into Another
+	static void StrCopy(char *dest, char*src)
+{
+	int i=0;
+	if(src!=0)
+	{
+		for( i; src[i]!='\0'; i++)
+		{
+			dest[i]=src[i];
+		}
+	}
+
+	dest[i]='\0';
+}
+
+	//Allocate memory on heap for Name and copy name from first name and last name
+	static char* GetStringFromBuffer(char *name)
+{
+	int size=Helper::StringLenght(name);
+	
+
+	char*Str=new char[size+1];
+	int record=0;
+
+	for(int i=0; i<=size; i++)
+			{
+				Str[i]=name[i];
+				record=i;
+	        }
+	
+	return (Str);
+
+}
+	static bool StringCompare(char*str1, char*str2)
+	{
+	   int Len1=Helper::StringLenght(str1);
+	   int Len2=Helper::StringLenght(str2);
+
+	  bool IsEqual=true;
+
+	   if(Len1==Len2)
+	   {
+	      for(int i=0; str2[i]!='\0'; i++)
+		  {
+		     if(str1[i]!=str2[i])
+			 {
+			   
+			    IsEqual=false;
+			 }
+		    
+		  }
+
+	   }
+	   else
+	   {
+		   return false;
+	   }
+	   
+	   if(IsEqual)
+	   {
+	      return true;
+	   
+	   }
+	   else
+	   {
+	      return false;
+	   
+	   }
+	}
+
+	static char* ConvertoString(int i, char* ch)
+	{  
+		char str[20];
+		char arr[20];
+	   _itoa_s(i,str,20);
+
+		Helper::StrCopy(arr,ch);
+
+		int index=Helper::StringLenght(arr);
+
+		for(int j=0; str[j]!='\0'; j++)
+		{
+		    arr[index]=str[j];
+			index++;
+		}
+
+		arr[index]='\0';
+
+		char * Arr=GetStringFromBuffer(arr);
+
+		return Arr;
+	}
+
+	static void DeallocateMemory(char***ptr, int index1, int index2)
+	{
+	 for(int i=0; i<index1; i++)
+	   {
+		  for(int j=0; j<index2; j++)
+		   {
+				delete ptr[i][j];
+		   }
+	   }
+
+	   for(int i=0; i<index1; i++)
+	   {
+		   delete ptr[i];
+	   }
+	     delete [] ptr;
+	}
+};
+
+
+
+
+class Base 
+{
+private:
+	char* ID;
+
+public:
+  char* GetID()
+	{
+	    return ID;	
+	}
+	Base()
+	{
+	   ID=0;
+	}
+	virtual ~Base();
+	virtual void DisplayListView()=0;
+	void LoadId(ifstream&);
+	virtual void DisplayName()=0;//pure virtua;
+	virtual void AddPostToTimeline(Post*)=0;//pure virtual
+	
+};
+
+void Base::LoadId(ifstream& fin)
+{
+	char temp[10];
+
+	fin>>temp;
+
+    ID=Helper::GetStringFromBuffer(temp);
+}
+//
+//void Base::DisplayName()
+//{
+//     cout<<ID;
+//}
+
+Base::~Base()
+{
+   if(ID!=0)
+	   delete []ID;
+}
+
+class Date
+{
+private:
+
+	int day;
+	int month;
+	int year;
+	static Date CurrentDate;
+public:
+	    
+		int GetDay();
+		int GetYear();
+		int GetMonth();
+		void DisplayDate();
+		bool IsLatestDate();
+		bool IsFoundIN_Past();
+		bool operator==(Date&);
+		static Date GetCurrentDate();
+
+	    Date(int d=0,int m =0,int y=0)
+	    {
+	      day=d;
+		  month=m;
+	      year=y;
+	    }
+
+		static void SetCurrentDate(int d, int m, int y )
+		{
+			 CurrentDate.day=d;
+			 CurrentDate.month=m;
+			 CurrentDate.year=y;
+		}
+
+		static void DisplayCurrentDate()
+		{
+		   cout<<CurrentDate.day<<"/"<<CurrentDate.month<<"/"<<CurrentDate.year<<endl;
+		}
+
+	    void LoadDateFromFile(ifstream&);
+		~Date()
+		{ }
+
+};
+Date Date::CurrentDate=0;
+
+void Date::DisplayDate()
+{
+	cout<<day<<"/"<<month<<"/"<<year<<endl;
+}
+
+bool Date::IsLatestDate()
+{
+     if(day==CurrentDate.day&&month==CurrentDate.month&&year==CurrentDate.year)
+		 return true;
+	 if(day==CurrentDate.day-1&&month==CurrentDate.month&&year==CurrentDate.year)
+		 return true;
+
+	 return false;
+}
+
+Date Date::GetCurrentDate()
+{
+	  return CurrentDate;
+}
+
+void Date::LoadDateFromFile(ifstream& fin)
+{
+	  fin>>day;
+	  fin>>month;
+	  fin>>year;
+}
+
+	bool Date::operator==(Date& obj)
+	{
+	   return(day==obj.day&& month==obj.month&& year==obj.year);
+	}
+	int Date::GetDay()
+	{
+	   return day;
+	  
+	}
+
+	int Date::GetMonth()
+	{
+	   return month;
+	}
+
+	int Date::GetYear()
+	{
+	   return year;
+	}
+
+class Comment
+{
+private:
+	char* ID;
+	char* Text;
+	Base* CommentBy;
+	static int TotalComments;
+public:
+	Comment();
+	~Comment();
+	void AddID(char*);
+	void SetID(char*);
+	void SetText(char*);
+	void DisplayComment();
+	void SetCommentBy(Base* ptr);
+};
+
+int Comment::TotalComments=0;
+
+Comment::Comment()
+{
+	ID=0;
+	Text=0;
+	CommentBy=0;
+}
+
+void Comment::AddID(char *str)
+{
+  ID=Helper::GetStringFromBuffer(str);
+  if(str!=0)
+  delete []str;
+}
+
+void Comment::SetID(char* str)
+{
+   ID=Helper::GetStringFromBuffer(str);
+}
+
+void Comment::DisplayComment()
+{
+	cout<<"\t\t";
+   CommentBy->DisplayName();
+   cout<<"wrote: "<<Text;
+}
+
+void Comment::SetText(char* str)
+{
+  Text=Helper::GetStringFromBuffer(str);
+}
+
+void Comment::SetCommentBy(Base* ptr)
+{
+      CommentBy=ptr;
+}
+
+Comment::~Comment()
+{
+	if(ID!=0)
+   delete []ID;
+
+	if(Text!=0)
+   delete []Text;
+}
+
+
+class Activity
+{
+private:
+	int type;
+	char*value;
+public:
+	Activity();
+	~Activity();
+	void DisplayActivity();
+	void LoadActivityFromFile(ifstream&);
+};
+
+Activity::Activity()
+{ 
+     value=0;
+}
+
+void Activity::LoadActivityFromFile(ifstream & fin)
+{
+   char temp[50];
+
+   fin>>type;
+
+   fin.ignore();
+
+   fin.getline(temp,50);
+
+   value=Helper::GetStringFromBuffer(temp);
+}
+
+void Activity::DisplayActivity()
+{
+     switch(type)
+	 {
+	 case 1:
+		 {
+		    cout<<" is feeling "<<value<<" ";
+		    break;
+		 }
+	 case 2:
+		 {
+			 cout<<" is Thinking about "<<value<<" ";
+			 break;
+		 }
+	 case 3:
+		 {
+		     cout<<" is Making "<<value<<" ";
+			 break;
+		 }
+	 case 4:
+		 {
+		     cout<<" is celeberating "<<value<<" ";
+		    break;
+		 }
+	 
+	 }
+	  
+}
+
+Activity::~Activity()
+{
+	if(value!=0)
+     delete [] value;
+}
+
+class Post
+{
+private:
+	char*ID;
+	int type;
+	char*Text;
+	Base* SharedBy;
+	Date SharedDate;
+	Base**LikedBy;
+	Comment** Comments;
+	Activity* activity;
+	int No_OfLikes;
+	int No_Of_Comments;
+	static int TotalPosts;
+public:
+	Post();
+	Post(char*);
+	virtual ~Post();
+	bool IsMemory();
+	char* GetText();
+	char* GetPostID();
+	Base* GetSharedBy();
+	Date GetSharedDate();
+	void ViewLikedList();
+	void AddPostID(char*);
+	void SetActivity(int);
+	virtual void ShowPost();
+	void DisplayLatestPost();
+	void AddLikedBy(Base*ptr);
+	void SetSharedDate(Date&);
+	void SetSharedBy(Base*ptr);
+	static int GetTotalPosts();
+	static void SetTotalPosts(int &);
+	void SetComments(Comment* ptr);
+	void LoadPostFromFile(ifstream&);
+	void AddComment(char*, Base*ptr);
+	virtual void DisplayTimeLinePost();
+};
+
+int Post::TotalPosts=0;
+
+Post::Post()
+{
+	  Text=0;
+	  ID=0;
+	  SharedBy=0;
+	  activity=0;
+	  No_OfLikes=0;
+	  No_Of_Comments=0;
+	  SharedDate=Date::GetCurrentDate();
+
+	  LikedBy= nullptr;
+	  Comments=nullptr;
+}
+
+Post::Post(char* text)
+{
+	  Text=Helper::GetStringFromBuffer(text);
+	  SharedBy=0;
+
+	  ID=0;
+	  activity=0;
+	  No_OfLikes=0;
+	  No_Of_Comments=0;
+	  SharedDate=Date::GetCurrentDate();
+
+	  LikedBy= nullptr;
+	  Comments=nullptr;
+}
+
+void Post::LoadPostFromFile(ifstream& fin)
+{
+	char temp[200];
+
+	fin>>type;
+
+	fin>>temp;
+	ID=Helper::GetStringFromBuffer(temp);
+
+	SharedDate.LoadDateFromFile(fin);
+
+	fin.ignore();
+	fin.getline(temp,200);
+
+	Text=Helper::GetStringFromBuffer(temp);
+
+	if(type!=1)
+	{
+	
+	activity=new Activity;
+
+	activity->LoadActivityFromFile(fin);
+
+	}
+}
+
+Date Post::GetSharedDate()
+{
+	  return SharedDate;
+}
+
+char* Post::GetText()
+{
+   return Text;
+}
+
+void Post::SetTotalPosts(int &T_ps)
+{
+   TotalPosts=T_ps;
+}
+
+char* Post::GetPostID()
+{
+   return ID;
+}
+
+int Post::GetTotalPosts()
+{
+    return TotalPosts;
+}
+
+Base* Post::GetSharedBy()
+{
+  return SharedBy;
+}
+
+void Post::AddPostID(char* str)
+{
+	  ID=Helper::GetStringFromBuffer(str);
+	  if(str!=0)
+	  delete []str;
+}
+
+void Post::AddComment(char* str, Base*ptr)
+{
+	Comment*cPtr=new Comment;
+
+	int temp=13;
+	temp++;
+
+	char*arr=Helper::ConvertoString(temp,"c");//Simmply Converting int to string
+
+	cPtr->AddID(arr);
+
+	cPtr->SetText(str);
+	cPtr->SetCommentBy(ptr);
+
+	SetComments(cPtr);
+
+}
+
+void Post::SetComments(Comment *ptr)
+{
+
+	if(No_Of_Comments==0)
+	{
+	    Comments=new Comment*[10];
+
+		for(int i=0; i<10; i++)
+		{
+		  Comments[i]=nullptr; 
+		}
+
+	}
+
+	if(No_Of_Comments<10)
+	{
+		Comments[No_Of_Comments]=ptr;
+		No_Of_Comments++;
+	}
+	else
+	{
+		cout<<"Sorry Post Is full of Comments\n";
+	}
+
+}
+
+bool Post::IsMemory()
+{
+      if(SharedDate.GetDay()==Date::GetCurrentDate().GetDay())
+	  {
+	       if(SharedDate.GetMonth()==Date::GetCurrentDate().GetMonth())
+		   {
+		       if(SharedDate.GetYear()!=Date::GetCurrentDate().GetYear())
+			   {
+			       return true;
+			   }
+		   }
+	  }
+
+	  return false;  
+}
+
+void Post::ShowPost()
+{
+	//ShowPost() will show Post Without Date
+	cout<<"---";
+
+	SharedBy->DisplayName(); //Displayname is virtual in Base class
+
+	if(type!=1)
+	{
+		activity->DisplayActivity();
+			cout<<endl;
+	}
+	else
+	{
+		cout<<" shared ";  
+	}
+
+	cout<<"---"<<Text<<" "<<endl;
+	if(Comments)
+	{
+		for(int i=0; Comments[i]!=0; i++)
+		{
+		   Comments[i]->DisplayComment();  //Simply Displaying Comments on Posts
+			   cout<<endl;
+		}
+	}
+}
+
+
+void Post::DisplayTimeLinePost()//It is a Virtual function In Base Class
+{
+	
+	cout<<"---";
+
+	SharedBy->DisplayName(); 
+
+	if(type!=1)
+	{
+
+		activity->DisplayActivity();
+
+		cout<<endl;
+	}
+	else
+	{
+		cout<<" shared ";
+	}
+		cout<<"---"<<Text<<" ";
+
+	SharedDate.DisplayDate();
+	if(Comments)
+	{
+		for(int i=0; Comments[i]!=0; i++)
+		{
+		   Comments[i]->DisplayComment();
+		   cout<<endl;
+		}
+	}
+}
+
+void Post::ViewLikedList()
+{
+ cout<<"Post Liked By: \n";
+
+	 if(LikedBy)
+	 {
+		 for(int i=0; LikedBy[i]!=0; i++)
+		 {
+			 LikedBy[i]->DisplayListView();//It will display ith object that liked.
+			 cout<<endl;
+		 }
+	 }
+	 else
+	 {
+		cout<<"Post has No Likes\n";
+	 }
+}
+
+void Post::SetSharedBy(Base* ptr)
+{
+	SharedBy=ptr;
+}
+
+void Post::AddLikedBy(Base* ptr)
+{
+	bool istrue=false;
+	
+	if(No_OfLikes==0)//This Creation of Base_Pointers is once
+	{
+	
+	  LikedBy=new Base*[10];
+
+	  for(int i=0; i<10; i++)
+	  {
+		  LikedBy[i]=0;
+	  }
+	
+	}
+
+	for(int i=0; i<10; i++)
+	{
+	    if(LikedBy[i]==ptr)
+		{
+		   istrue= true; //Checking The if the user has already Liked
+		   break;
+		}
+	}
+
+
+	if(!istrue)
+	{
+		LikedBy[No_OfLikes]=ptr;
+		No_OfLikes++;
+	}
+	else
+	{
+	   cout<<"Already Liked\n";
+	}
+}
+
+
+Post::~Post()
+{
+ if(Text!=0)
+	 delete[]Text;
+ if(ID!=0)
+	 delete[]ID;
+
+ if(activity!=0)
+	 delete activity;
+ if(Comments)
+ {
+	 for(int i=0; Comments[i]!=0; i++)
+	 {
+		 delete Comments[i];
+	 }
+ }
+ if(LikedBy)
+ {
+	 delete []LikedBy;
+ }
+ if(Comments)
+ {
+	 delete []Comments;
+ }
+
+}
+
+class Memory:public Post//It shall be inheriting everything from its Parent class Except original Post
+{
+private:
+	Post* Original_Post;
+public:
+	void DisplayTimeLinePost();// This Is Function Overriding
+	Memory();
+	int GetYearInterval();
+	Memory(Post*, char*Text);//Parametrized Memory Constructor
+	~Memory();
+};
+
+Memory::Memory()//Default Constructor
+{ 
+	Original_Post=0;
+}
+
+Memory::Memory(Post* original, char*Text): Post(Text)
+{
+     Original_Post=original;
+
+	 int T=Post::GetTotalPosts();
+
+	T++;
+
+	char*arr=Helper::ConvertoString(T,"post");//Converting int to string
+
+	Post::AddPostID(arr);
+
+	Post::SetSharedBy(original->GetSharedBy());
+}
+int Memory::GetYearInterval()
+{
+    return (Date::GetCurrentDate().GetYear()-Original_Post->GetSharedDate().GetYear());
+}
+
+void Memory::DisplayTimeLinePost()
+{
+	cout<<"~~~~~~~~~~~~~";
+	GetSharedBy()->DisplayName();
+	cout<<"shared a memory~~~~~~~~~~";
+	GetSharedDate().DisplayDate();
+	cout<<endl;
+	cout<<endl;
+	cout<<GetText()<<endl;
+	cout<<GetYearInterval()<<" years Ago\n";
+	Original_Post->Post::DisplayTimeLinePost();
+	
+}
+
+Memory::~Memory()
+{
+	Original_Post=nullptr;
+}
+
+class Page: public Base
+{
+private:
+	char* Title;
+	Post** Timeline;
+	int No_Of_Posts;
+	static int TotalPages;
+public:
+	Page();
+	void ViewPage();
+	char* GetTitle();
+	void DisplayName();
+	void DisplayLatestPost();//This Is also a virtual Function In Base Class.
+	void DisplayListView();
+	static int GetTotalPage();
+	static void SetTotalPage(int);
+	void AddPostToTimeline(Post *);// Virtual Function In Base class
+	void LoadPageFromFile(ifstream&);
+	~Page();
+};
+
+int Page::TotalPages=0;
+
+void Page::LoadPageFromFile(ifstream&fin)
+{
+
+	Base::LoadId(fin);
+	char Temp[50];
+	fin.ignore();
+	fin.getline(Temp,50);
+	Title=Helper::GetStringFromBuffer(Temp);
+
+}
+
+void Page::DisplayLatestPost()//Its Usage Is In ViewHome and it will Posts of last 24 hours
+{
+	if(Timeline)
+	{
+		for(int i=0; Timeline[i]!=0; i++)
+		{
+			if(Timeline[i]->GetSharedDate().IsLatestDate())
+			   Timeline[i]->ShowPost();
+		}
+	}
+}
+
+char* Page::GetTitle()
+{
+  return Title;
+}
+
+void Page::DisplayName()//This Is a virtual Function In Base Class.
+{
+      cout<<Title<<" ";
+}
+
+void Page::DisplayListView()
+{
+      cout<<GetID()<<"-";
+	  DisplayName();  
+}
+
+void Page::ViewPage()//This function Will Diplay Page and its Timeline
+{
+    cout<<Title<<endl;
+	
+	for(int i=0; Timeline[i]!=0; i++)
+	{
+		Timeline[i]->DisplayTimeLinePost();
+		cout<<endl;
+	}
+}
+
+void Page::AddPostToTimeline(Post* ptr)
+{
+	if(No_Of_Posts==0)//Similarly Checking once
+	{
+	    Timeline=new Post*[10];
+
+		for(int i=0; i<10; i++)
+		{
+		   Timeline[i]=0;
+		}
+
+	}
+	
+	if(No_Of_Posts<10)
+	{
+		Timeline[No_Of_Posts]=ptr;//Adding Posts in Timeline
+		No_Of_Posts++;
+	}
+	else
+	{
+		cout<<"Sorry You can Have ten posts at most\n";
+	}
+	
+}
+
+int Page::GetTotalPage()
+{
+   return TotalPages;
+}
+
+ void Page::SetTotalPage(int T_pg)
+{
+	TotalPages=T_pg;
+}
+
+Page::Page()
+{
+	  Title=0;
+
+	  No_Of_Posts=0;
+
+	  Timeline=nullptr;
+}
+
+
+Page::~Page()
+{
+	if(Title!=0)
+	  delete []Title;
+
+	if(Timeline)
+	{
+		for(int i=0; Timeline[i]!=0; i++)
+		{
+		   delete Timeline[i];
+		}
+	}
+
+	if(Timeline)
+	delete []Timeline;
+
+}
+
+class User: public Base
+{
+private:
+char* FirstName;
+char* LastName;
+User** FriendList;
+Page** LikedPages;
+Post** TimeLine;
+int No_Of_Friends;
+int No_Of_LikedPages;
+int No_Of_Posts;
+static int TotalUser;
+public:
+	static int GetTotalUser()
+	 {
+	   return TotalUser;
+	 }
+	void LoadDataFromFile(ifstream&);
+	User();
+	void ViewHome();
+	bool HaveMemory();
+	void SeeMemory();
+	void DisplayName();
+	void ViewTimeline();
+	void ViewFriendList();
+	void ViewLikedPages();
+	void DisplayListView();
+	void DisplayLatestPost();
+	void AddPostToTimeline(Post*);
+	static void SetTotalUser(int);
+	void Associate(char*, char***);
+	void AssociateLikedPages(Page*);
+	void AssociateFriendList(User*);
+	void ShareMemory(Post*ptr, char*);
+	~User();
+};
+
+User::User()
+{
+    
+	FirstName=0;
+	LastName=0;
+
+	No_Of_Friends=0;
+	No_Of_Posts=0;
+	No_Of_LikedPages=0;
+
+	FriendList=nullptr;
+    LikedPages=nullptr;
+	TimeLine=nullptr;
+}
+
+int User::TotalUser=0;
+
+void User::LoadDataFromFile(ifstream &fin)
+{
+
+	char temp[20];
+
+	Base::LoadId(fin);
+
+	fin>>temp;
+
+	FirstName=Helper::GetStringFromBuffer(temp);
+
+	fin>>temp;
+
+	LastName=Helper::GetStringFromBuffer(temp);
+
+}
+
+void User::AssociateLikedPages(Page* Pptr)
+{
+
+	if(No_Of_LikedPages==0)//Only check Once.
+	{
+	    LikedPages=new Page*[10];
+
+		for(int i=0; i<10; i++)
+		{
+		  LikedPages[i]=0; 
+		}
+
+    }
+
+	if(No_Of_LikedPages<10)
+	{
+		LikedPages[No_Of_LikedPages]=Pptr;//Adding Liked Pages
+		No_Of_LikedPages++;
+	}
+	else
+	{
+		cout<<"Sorry You can like at most 10 pages\n";
+	}
+
+}
+
+void User::AssociateFriendList(User* Uptr)
+{
+	if(No_Of_Friends==0)
+	{
+	    FriendList=new User*[10];
+
+		for(int i=0; i<10; i++)
+		{
+		  FriendList[i]=0; 
+		}
+
+	}
+
+	if(No_Of_Friends<10)
+	{
+		FriendList[No_Of_Friends]=Uptr;
+		No_Of_Friends++;
+	}
+	else
+	{
+		cout<<"Sorry You can Have ten friends at a time\n";
+	}
+
+}
+
+void User::DisplayListView()//virtual In Base Class
+{
+      cout<<GetID()<<"-";
+	  DisplayName();
+}
+
+void User::SetTotalUser(int T_us)
+{
+    TotalUser=T_us;
+}
+
+void User::DisplayName()
+{
+   cout<<FirstName<<" "<<LastName<<" ";
+}
+
+void User::ViewFriendList()
+{ 
+	DisplayName();
+    cout<<" - FriendList: \n";
+	if(FriendList)
+	{
+		for(int i=0; FriendList[i]!=0; i++)
+		{
+		  FriendList[i]->DisplayListView();
+		  cout<<endl;
+		}
+	}
+	else
+	{
+	   cout<<"No friends So far\n";
+	}
+}
+
+
+void User::ViewLikedPages()
+{
+	DisplayName();
+	cout<<" - LikedPages: \n";
+	if(LikedPages)
+	{
+		for(int i=0; LikedPages[i]!=0; i++)
+		{
+		   LikedPages[i]->DisplayListView();
+		   cout<<endl;
+		}
+	}
+	else
+	{
+	  cout<<"No pages Liked\n";
+	}
+}
+
+void User::ViewTimeline()
+{
+	DisplayName();
+   cout<<" TimeLine.."<<endl;
+
+   if(TimeLine)
+   {
+	   for(int i=0; TimeLine[i]!=0; i++)
+	   {
+		   TimeLine[i]->DisplayTimeLinePost();
+		   cout<<endl;
+	   }
+   }
+   else
+   {
+	   cout<<"No Posts To Show\n";
+   }
+
+}
+
+void User::AddPostToTimeline(Post* ptr)
+{
+	
+	if(No_Of_Posts==0)
+	{
+	    TimeLine=new Post*[10];//This Will be Created Once
+
+	for(int i=0; i<10; i++)
+	{
+	   TimeLine[i]=0;
+	}
+
+	}
+	
+	if(No_Of_Posts<10)
+	{
+		TimeLine[No_Of_Posts]=ptr;//adding Posts In timeline
+		No_Of_Posts++;
+	}
+	else
+	{
+		cout<<"Sorry You can Have ten Posts at most\n";
+	}
+	
+}
+
+bool User::HaveMemory()
+{
+	bool istrue=false;
+
+	if(TimeLine)
+	{
+		for(int i=0; TimeLine[i]!=0; i++)
+		{
+			if(TimeLine[i]->IsMemory())
+			{
+			       istrue=true;
+			}
+		}
+	}
+
+	if(istrue)
+    return true;
+	else
+	return false;
+}
+void User::SeeMemory()//It Will only Display Memory and not creating Memory Object.
+{
+	int year;
+	bool istrue=false;
+	Post* Memory;
+	for(int i=0; TimeLine[i]!=0; i++)
+	{
+	   if(TimeLine[i]->IsMemory())//Check If Memory Exsists
+		   {
+			   Memory=TimeLine[i];
+			   year=(Date::GetCurrentDate().GetYear())-(TimeLine[i]->GetSharedDate().GetYear());
+			   istrue=true;
+		   }
+	}
+
+	if(istrue)
+	{
+	   cout<<" We hope you enjoy looking back and sharing your memories on Facebook, from the most recent to those long ago\n\n";
+	   cout<<"\tOn This Day\n\t";
+	   cout<<year<<" years ago\n";
+	   Memory->DisplayTimeLinePost();
+	}
+	else
+	{
+	   cout<<"No memories on this Day In Past Years\n";
+	}
+
+}
+
+void User::DisplayLatestPost()
+{
+	if(TimeLine)
+	{
+		for(int i=0; TimeLine[i]!=0; i++)
+		{
+		  if(TimeLine[i]->GetSharedDate().IsLatestDate())
+				   TimeLine[i]->ShowPost();
+		}
+	}
+}
+
+
+void User::ShareMemory(Post*ptr ,char* str)//this Function Will check If memory exsists and Create Memory Object.
+{
+	if(HaveMemory())
+	{
+		Memory* memory=new Memory(ptr,str);
+
+		AddPostToTimeline(memory); //Adding Memory type Post to timeline.
+	}
+	else
+	{ 
+	   cout<<"No memories\n";
+	}
+}
+
+void User::ViewHome()//It will Display Last 24 hours Posts of friends and Liked Pages
+
+{
+	 DisplayName();
+
+	 cout<<"----Home---\n\n";
+	 if(FriendList)
+	 {
+		 for(int i=0; FriendList[i]!=0; i++)
+
+		 FriendList[i]->DisplayLatestPost();    
+
+		 for(int i=0; LikedPages[i]!=0; i++)
+
+		 LikedPages[i]->DisplayLatestPost();
+	 }
+	 else
+	 {
+	     cout<<"No posts To show\n";
+	 }
+}
+
+User::~User()
+{
+	//User's Destructor.
+
+  if(FirstName!=0)
+  {
+     delete []FirstName;
+  }
+
+  if(LastName!=0)
+  {
+    delete []LastName;
+  }
+
+  if(TimeLine)
+  {
+	  for(int i=0; TimeLine[i]!=0 ; i++)
+	  {
+		delete TimeLine[i];
+	  }
+  }
+  if(FriendList!=0)
+  delete [] FriendList;
+
+  if(LikedPages!=0)
+  delete [] LikedPages;
+
+  if(TimeLine!=0)
+  delete [] TimeLine;
+
+}
+
+class Facebook//Controller Class
+{
+private:
+User** UsersList;
+Page** PageList;
+Post** PostList;
+Comment** Comments;
+int TotalPage;
+int TotalUser;
+int TotalPosts;
+int TotalComments;
+public:
+void Run();
+void Associate(char***);
+void Display();
+Base* SearchObjById(char*);
+void LoadPage(char*);
+void LoadUser(char*);
+void LoadPost(char*);
+void LoadComments(char*);
+Page* SearchPageByID(char*);
+User* SearchUserByID(char*);
+Post* SearchPostByID(char*);
+void LoadData(char*, char*, char*, char*);
+~Facebook();
+};
+
+Post* Facebook::SearchPostByID(char*str)
+{
+	  char* str_1;
+
+	  int Total_P=Post::GetTotalPosts();
+
+	  for(int i=0; i<Total_P; i++)
+	  {
+		   str_1=PostList[i]->GetPostID();
+
+	   if(Helper::StringCompare(str_1,str))//Matching Post ID
+		{
+			return PostList[i];
+		}
+
+	  }
+	  return 0;
+}
+
+
+Page* Facebook::SearchPageByID(char*str)
+{
+	  char* str_1;
+
+	  int Total_Pg=Page::GetTotalPage();
+
+	  for(int i=0; i<Total_Pg; i++)
+	  {
+		str_1=PageList[i]->GetID();
+
+			if(Helper::StringCompare(str_1,str))//Matching Page ID
+			{
+				return PageList[i];
+			}
+
+	  }
+	  return 0;
+}
+
+User* Facebook::SearchUserByID(char * str)
+{
+     char* str_1;
+
+	 int Total_Us=User::GetTotalUser();
+
+	 for(int i=0; i<Total_Us; i++)
+	 {
+	     str_1=UsersList[i]->GetID();
+	 
+	   if(Helper::StringCompare(str_1,str))//Matching User ID
+	    {
+	       return UsersList[i];
+	    }
+
+	 }
+	 return 0;
+}
+
+Base* Facebook::SearchObjById(char *str)//This Function Will search user and page based on condition
+{
+
+	  Base*Ptr=0;
+
+	  if(*str=='u')
+	  {
+		   Ptr=SearchUserByID(str);
+	  }
+	  else
+	  if(*str=='p')
+	  {
+		  Ptr=SearchPageByID(str);
+	  }       
+
+	 return Ptr;
+}
+
+//This Function Is Associating FriendList from Character Triple Pointer
+void Facebook::Associate( char*** str )
+{
+	User* ptr;
+
+	char Temp[30];
+
+	 for(int i=0; i<20; i++)
+	 {
+		  for(int j=0; ; j++)
+		  {
+			if(Helper::StringCompare(str[i][j],"-1"))
+				break;
+
+			Helper::StrCopy(Temp,str[i][j]); 
+
+			ptr=SearchUserByID(Temp);
+
+			UsersList[i]->AssociateFriendList(ptr);
+		  }      
+	 } 
+}
+
+
+void Facebook::LoadPage(char*Pf_Name)
+{
+    ifstream fin(Pf_Name);
+
+	
+
+	fin>>TotalPage;
+
+	Page::SetTotalPage(TotalPage);
+
+	PageList=new Page*[TotalPage];
+
+	for(int i=0; i<TotalPage; i++)
+	{
+	   PageList[i]=new Page;
+	}
+
+	for(int i=0; i<TotalPage; i++)
+	{
+	  PageList[i]->LoadPageFromFile(fin);
+	}
+
+	fin.close();
+
+}
+
+
+void Facebook::LoadUser(char * Uf_Name)
+{
+	
+	char***TempFriendList;//A temporary Friend List 
+
+	TempFriendList=new char**[20];
+	for(int i=0; i<20; i++)
+	{
+		TempFriendList[i]=new char*[10];
+	}
+
+	for(int i=0; i<20; i++)
+	{    
+		for(int j=0; j<10; j++)
+
+		TempFriendList[i][j]=new char [5];
+	}
+
+	ifstream fil(Uf_Name);
+
+	fil>>TotalUser;
+
+	User::SetTotalUser(TotalUser);
+
+	UsersList=new User*[TotalUser];
+
+	for(int i=0; i<TotalUser; i++)
+	{
+	   UsersList[i]=new User;
+	}
+	
+	bool istrue=true;
+
+    for(int i=0; i<TotalUser; i++)
+    { 
+	      UsersList[i]->LoadDataFromFile(fil);
+
+		  istrue=false;
+
+          for(int j=0;!istrue==true;j++)
+		  {
+		       fil>>TempFriendList[i][j];
+			   istrue=Helper::StringCompare(TempFriendList[i][j],"-1");
+		  }
+
+		  istrue=false;
+		  char Temp[30];
+
+		  //associating Liked Pages
+		  while(!istrue)
+			{
+			fil>>Temp;
+
+			istrue=Helper::StringCompare(Temp,"-1");
+
+			if(!istrue)
+			{
+				Page*ptr=SearchPageByID(Temp);
+		
+				UsersList[i]->AssociateLikedPages(ptr);
+			}
+		}
+       	   istrue=true;  
+   }
+
+   Associate(TempFriendList);//associating Friends
+   Helper::DeallocateMemory(TempFriendList,20,10);
+  
+   fil.close();
+
+}
+
+
+void Facebook::LoadPost(char* Pof_Name)
+{
+
+	bool istrue=false;
+	char Temp_Str[30];
+    Base* Ptr;
+
+	ifstream fi(Pof_Name);//Reading From File
+    fi>>TotalPosts;
+
+   Post::SetTotalPosts(TotalPosts);
+
+   PostList=new Post*[TotalPosts];
+
+   for(int i=0; i<TotalPosts; i++)
+   {
+      PostList[i]=new Post;
+   }
+
+   for(int i=0; i<TotalPosts; i++)
+   {
+   
+    PostList[i]->LoadPostFromFile(fi);
+	
+	fi>>Temp_Str;
+	  
+	Ptr=SearchObjById(Temp_Str);
+
+	Ptr->AddPostToTimeline(PostList[i]);
+
+	PostList[i]->SetSharedBy(Ptr);
+
+	Temp_Str[0]=0;
+
+	while(!istrue)//Adding Posts Liked BY's
+		{
+			fi>>Temp_Str;
+
+			istrue=Helper::StringCompare(Temp_Str,"-1");
+
+		   if(!istrue)
+			{
+			 Ptr=SearchObjById(Temp_Str);
+
+			 PostList[i]->AddLikedBy(Ptr);  
+		   }
+
+	   }
+
+		istrue=false;
+   }
+
+   fi.close();
+}
+
+void Facebook::LoadComments(char *Cf_Name)
+{
+		Base*Ptr=0;
+
+		ifstream f(Cf_Name);
+
+		f>>TotalComments;
+
+		Comments=new Comment*[TotalComments];
+
+		for(int i=0; i<TotalComments; i++)
+		 {
+			Comments[i]= new Comment;
+		 }
+
+		 char Buffer[70];
+
+	    for(int i=0; i<TotalComments; i++)
+	     {
+		   f>>Buffer;
+
+		   Comments[i]->SetID(Buffer);
+
+		   f>>Buffer;
+
+		   Post*ptr=SearchPostByID(Buffer);
+
+		   ptr->SetComments(Comments[i]);
+
+		   f>>Buffer;
+
+		   Ptr=SearchObjById(Buffer);
+
+		   Comments[i]->SetCommentBy(Ptr);
+
+		   f.getline(Buffer,70);
+
+		   Comments[i]->SetText(Buffer);
+	    }
+		f.close();
+}
+
+void Facebook::LoadData(char*uf_name, char*pf_name, char*pof_name, char*cf_name)
+{
+	LoadPage(pf_name);
+	LoadUser(uf_name);
+	LoadPost(pof_name);
+	LoadComments(cf_name);
+}
+
+void Facebook::Run()//Run Function for running This Social Network App
+{
+        cout<<"-----------------------------------------------------------------------------\n\n";
+	    cout<<" command:\t\tSet Cuurent Sysytem Date 15 11 2017\n";
+
+	    Date::SetCurrentDate(15,11,2017);
+        cout<<"-----------------------------------------------------------------------------\n";
+	    cout<<"\t\tSystem Date:";
+		
+	    Date::DisplayCurrentDate();
+	    cout<<"-----------------------------------------------------------------------------\n\n";
+	  
+		cout<<"\n Command:\tSet Current User ('u7')\n";
+		cout<<"-----------------------------------------------------------------------------\n\n";
+        User*cur=SearchUserByID("u7");
+
+		cur->DisplayName();
+
+	    cout<<"successfully set as current user\n\n";
+
+		cout<<"\n Command:\tView FriendList\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cur->ViewFriendList();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tView LikedPages\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cur->ViewLikedPages();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tView Home\n";
+
+	    cout<<"-----------------------------------------------------------------------------\n";
+
+		cur->ViewHome();
+
+	    cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tView TimeLine\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cur->ViewTimeline();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tView LikedList('post5')\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		Post*Ptr=SearchPostByID("post5");
+
+		Ptr->ViewLikedList();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\t LikePost('post5')\n";
+
+		Ptr->AddLikedBy(cur);
+
+		cout<<"\n Command:\tView LikedList('post5')\n";
+
+		Ptr->ViewLikedList();
+
+		//Ptr->AddLikedBy(cur);
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tpost comment(post4, Good Luck For Your Result)\n\n";
+		cout<<"\n Command:\tView post('post4')\n";
+
+		Ptr=SearchPostByID("post4");
+
+		Ptr->AddComment("Good Luck For Your Result", cur);
+
+		Ptr->DisplayTimeLinePost();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tpost comment(post8, Thanks For The Wishes)\n\n";
+		cout<<"\n Command:\tView post('post8')\n";
+
+		Ptr=SearchPostByID("post8");
+
+		Ptr->AddComment("Thanks For The Wishes", cur);
+
+		Ptr->DisplayTimeLinePost();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+		cout<<"\n Command:\tSeeYourMemory()\n";
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cur->SeeMemory();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tShareMemory(post10, Never Thought I will Be specialist In That Field)\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+			Ptr=SearchPostByID("post10");
+
+					cur->ShareMemory(Ptr,"Never Thought I will Be specialist In That Field");
+
+				cur->ViewTimeline();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tViewPage(p1)\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		Page*ptr=SearchPageByID("p1");
+
+		ptr->ViewPage();
+
+		cout<<"-----------------------------------------------------------------------------\n";
+		
+		/*cout<<"\n Command:\tSet Current User ('u11')\n";
+		cout<<"-----------------------------------------------------------------------------\n\n";
+        User*Curr=SearchUserByID("u11");
+
+		Curr->DisplayName();
+
+	    cout<<"successfully set as current user\n\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+
+		cout<<"\n Command:\tView Home\n";
+
+	    cout<<"-----------------------------------------------------------------------------\n";
+
+		Curr->ViewHome();
+
+	    cout<<"-----------------------------------------------------------------------------\n";
+
+		cout<<"\n Command:\tView TimeLine\n";
+
+		cout<<"-----------------------------------------------------------------------------\n";
+
+		Curr->ViewTimeline();
+
+		cout<<"-----------------------------------------------------------------------------\n";*/
+}
+
+Facebook::~Facebook()
+{
+		for(int i=0; i<TotalUser; i++)
+		{
+			 if(UsersList[i]!=0)
+			 {
+			   delete UsersList[i];
+			 }
+		}
+        
+		if(UsersList)
+		{
+			delete []UsersList;
+		}
+
+		for(int i=0; i<TotalPage; i++)
+		{
+			if(PageList[i]!=0)
+			{
+			  delete PageList[i];
+			}
+		}
+
+		if(PageList)
+		{
+		  delete []PageList;
+		}
+}
+
+int main()
+{
+	{
+		cout<<"-----------------------Welcome-----------------------------\n";
+		Sleep(2000);
+		cout<<"-----------------------Facebook-------------------------\n";
+		Sleep(1000);
+
+		cout<<"Loading";
+			Sleep(500);
+			cout<<"- ";
+			Sleep(500);
+			cout<<"- ";
+			Sleep(500);
+			cout<<"- ";
+			Sleep(1000);
+
+			system("cls");
+
+	   Facebook fb;
+
+	   fb.LoadData("User.txt","pagedata.txt","postdata.txt","commentdata.txt");
+
+	   fb.Run();
+	}
+
+	system ("pause");
+	return 0;
+}
